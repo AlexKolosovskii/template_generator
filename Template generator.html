@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Структур Проектов</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #3c4b64;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        main {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #fafafa;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .preview-container {
+            margin-top: 25px;
+            display: none; /* Скрыто по умолчанию */
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .preview-header h3 {
+            color: #333;
+        }
+
+        .file-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .file-tab {
+            padding: 8px 15px;
+            background-color: #eee;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 2px;
+        }
+
+        .file-tab.active {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .file-content {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 0 0 6px 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none; /* Скрыто по умолчанию */
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #f1f3f5;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Генератор Структур Проектов</h1>
+        </header>
+        <main>
+            <div class="form-group">
+                <label for="projectNameInput">Название проекта:</label>
+                <input type="text" id="projectNameInput" placeholder="Введите название проекта">
+            </div>
+            <div class="form-group">
+                <label for="templateSelect">Выберите тип проекта:</label>
+                <select id="templateSelect">
+                    <option value="">-- Выберите --</option>
+                    <optgroup label="Python">
+                        <option value="simplePython">Простой Python-скрипт</option>
+                        <option value="flaskApp">Flask Web App</option>
+                        <option value="dockerPython">Python + Docker</option>
+                        <option value="pythonPackage">Python Package (setuptools + pytest)</option>
+                    </optgroup>
+                    <optgroup label="Скрипты">
+                        <option value="bashProject">Bash-скрипты</option>
+                    </optgroup>
+                </select>
+            </div>
+            <button onclick="generateProject()">Создать проект</button>
+
+            <div class="loading" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <p>Генерация ZIP-архива...</p>
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="preview-header">
+                    <h3>Предварительный просмотр</h3>
+                </div>
+                <div class="file-tabs" id="fileTabs"></div>
+                <div class="file-content" id="fileContent"></div>
+            </div>
+
+            <button id="downloadButton" onclick="downloadZip()" style="display: none;">Скачать ZIP</button>
+        </main>
+        <footer>
+            <p>Прототип персональной утилиты</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const projectTemplates = {
+            simplePython: {
+                "main.py": `# main.py - Основной скрипт Python
+
+def main():
+    print("Привет от проекта {{PROJECT_NAME}}!")
+
+if __name__ == "__main__":
+    main()
+`,
+                "__init__.py": `# __init__.py - Помечает директорию как пакет Python\n`
+            },
+            flaskApp: {
+                "app.py": `# app.py - Пример минимального Flask-приложения для {{PROJECT_NAME}}
+
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+`,
+                "requirements.txt": `Flask==2.3.3\n`,
+                ".gitignore": `# .gitignore - Файлы и директории, игнорируемые Git
+
+# Виртуальные окружения
+venv/
+env/
+.venv/
+
+# Логи
+*.log
+
+# Pytest
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+`,
+                "templates/index.html": `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{PROJECT_NAME}}</title>
+</head>
+<body>
+    <h1>Добро пожаловать в {{PROJECT_NAME}}!</h1>
+</body>
+</html>
+`
+            },
+            dockerPython: {
+                "main.py": `# main.py - Основной скрипт Python для {{PROJECT_NAME}}
+
+def main():
+    print("Привет из {{PROJECT_NAME}} в Docker!")
+
+if __name__ == "__main__":
+    main()
+`,
+                "Dockerfile": `# Dockerfile - Инструкции для сборки образа {{PROJECT_NAME}}
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "./main.py"]
+`,
+                "requirements.txt": `# requests==2.25.1\n`
+            },
+            pythonPackage: {
+                "README.md": `# {{PROJECT_NAME}}
+
+Описание проекта {{PROJECT_NAME}}.
+
+## Установка
+
+\`\`\`bash
+pip install .
+\`\`\`
+
+## Использование
+
+\`\`\`python
+from {{PROJECT_NAME}} import main
+
+main.hello()
+\`\`\`
+
+## Тестирование
+
+\`\`\`bash
+pytest
+\`\`\`
+`,
+                "pyproject.toml": `[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{PROJECT_NAME}}"
+version = "0.1.0"
+description = "Краткое описание {{PROJECT_NAME}}"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+# Зависимости можно добавить сюда
+# dependencies = [
+#     "requests>=2.25.0",
+# ]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/{{PROJECT_NAME}}"
+Repository = "https://github.com/yourusername/{{PROJECT_NAME}}"
+`,
+                ".gitignore": `# .gitignore - Файлы и директории, игнорируемые Git
+
+# Виртуальные окружения
+venv/
+env/
+.venv/
+
+# Логи
+*.log
+
+# Pytest
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+`,
+                "{{PROJECT_NAME}}/__init__.py": `# {{PROJECT_NAME}}/__init__.py
+
+__version__ = "0.1.0"
+`,
+                "{{PROJECT_NAME}}/main.py": `# {{PROJECT_NAME}}/main.py
+
+def hello():
+    print("Привет от {{PROJECT_NAME}}!")
+`,
+                "tests/__init__.py": ``,
+                "tests/test_main.py": `# tests/test_main.py
+
+from {{PROJECT_NAME}}.main import hello
+
+def test_hello(capsys):
+    hello()
+    captured = capsys.readouterr()
+    assert "Привет от {{PROJECT_NAME}}!" in captured.out
+`
+            },
+            bashProject: {
+                "scripts/build.sh": `#!/bin/bash
+# build.sh - Скрипт сборки для {{PROJECT_NAME}}
+
+echo "Сборка проекта {{PROJECT_NAME}}..."`,
+                "scripts/deploy.sh": `#!/bin/bash
+# deploy.sh - Скрипт деплоя для {{PROJECT_NAME}}
+
+echo "Деплой проекта {{PROJECT_NAME}}..."`,
+                ".env.example": `# .env.example - Пример переменных окружения для {{PROJECT_NAME}}
+
+# DB_HOST=localhost
+# DB_USER=myuser
+`
+            }
+        };
+
+        let currentZip = null;
+        let currentFiles = {};
+
+        function replacePlaceholders(content, projectName) {
+            // Заменяем {{PROJECT_NAME}} на имя проекта
+            let processedContent = content.replace(/\{\{PROJECT_NAME\}\}/g, projectName || 'my_project');
+            // Для шаблона pythonPackage нужно заменить {{PROJECT_NAME}} в именах папок/файлов тоже
+            // Это обрабатывается при добавлении в ZIP
+            return processedContent;
+        }
+
+        function generateProject() {
+            const projectName = document.getElementById('projectNameInput').value.trim();
+            const selectedValue = document.getElementById('templateSelect').value;
+
+            if (!selectedValue) {
+                alert('Пожалуйста, выберите тип проекта.');
+                return;
+            }
+
+            // Сброс состояния
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('downloadButton').style.display = 'none';
+            document.getElementById('fileTabs').innerHTML = '';
+            document.getElementById('fileContent').textContent = '';
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            const template = projectTemplates[selectedValue];
+            const processedFiles = {};
+            const zip = new JSZip();
+
+            for (const [rawFilename, content] of Object.entries(template)) {
+                const processedFilename = rawFilename.replace(/\{\{PROJECT_NAME\}\}/g, projectName || 'my_project');
+                const processedContent = replacePlaceholders(content, projectName);
+                processedFiles[processedFilename] = processedContent;
+                zip.file(processedFilename, processedContent);
+            }
+
+            currentFiles = processedFiles;
+
+            // Показываем предварительный просмотр
+            showPreview(Object.keys(processedFiles)[0]);
+            document.getElementById('previewContainer').style.display = 'block';
+            document.getElementById('loadingIndicator').style.display = 'none';
+
+            // Генерируем ZIP
+            zip.generateAsync({type:"blob"})
+                .then(function(blob) {
+                    currentZip = blob;
+                    document.getElementById('downloadButton').style.display = 'block';
+                });
+        }
+
+        function showPreview(filename) {
+            const fileContentElement = document.getElementById('fileContent');
+            fileContentElement.textContent = currentFiles[filename];
+
+            document.querySelectorAll('.file-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filename === filename);
+            });
+        }
+
+        function downloadZip() {
+            if (currentZip) {
+                const projectName = document.getElementById('projectNameInput').value.trim() || 'project_structure';
+                const url = URL.createObjectURL(currentZip);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = projectName + '.zip';
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                alert('Сначала создайте проект.');
+            }
+        }
+
+        document.getElementById('previewContainer').addEventListener('click', function(e) {
+            if (e.target.classList.contains('file-tab')) {
+                const filename = e.target.dataset.filename;
+                showPreview(filename);
+            }
+        });
+
+        function showPreview(firstFilename) {
+            const fileTabsElement = document.getElementById('fileTabs');
+            const fileContentElement = document.getElementById('fileContent');
+
+            fileTabsElement.innerHTML = '';
+
+            for (const filename of Object.keys(currentFiles)) {
+                const tab = document.createElement('div');
+                tab.className = 'file-tab';
+                tab.textContent = filename;
+                tab.dataset.filename = filename;
+                if (filename === firstFilename) {
+                    tab.classList.add('active');
+                }
+                fileTabsElement.appendChild(tab);
+            }
+
+            fileContentElement.textContent = currentFiles[firstFilename];
+        }
+    </script>
+</body>
+</html>
